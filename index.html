@@ -1,0 +1,1747 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>小邮差 · 秋招求职日历 Demo</title>
+<style>
+:root{--stage-bg:#202024}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Helvetica,Arial,sans-serif;
+  background:var(--stage-bg);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+button,input{font-family:inherit}
+button{cursor:pointer}
+
+.stage{
+  position:fixed;inset:0;display:grid;place-items:center;
+  background:linear-gradient(180deg,#26262b 0%,#1c1c21 100%);
+  overflow:hidden;
+}
+.phone{
+  width:390px;height:844px;border-radius:52px;
+  background:#0c0c10;
+  padding:10px;
+  box-shadow:0 40px 90px rgba(0,0,0,.55),0 6px 22px rgba(0,0,0,.35);
+  transform-origin:center center;
+}
+.screen{
+  width:100%;height:100%;border-radius:42px;overflow:hidden;
+  background:#fff;
+  position:relative;
+}
+.mini-app{
+  width:100%;height:100%;display:flex;flex-direction:column;
+  position:relative;background:var(--bg);color:var(--ink);
+}
+.mini-app[data-theme="pink"]{
+  --bg:#fbf7f9;
+  --surface:#ffffff;
+  --surface-2:#f6edf2;
+  --ink:#241a20;
+  --muted:#99848f;
+  --line:rgba(36,26,32,.09);
+  --accent:#e9567f;
+  --accent-2:#fcd9e4;
+  --on-accent:#ffffff;
+  --chip:#fdebf0;
+  --chip-line:#f3b8ca;
+  --soft-shadow:0 10px 26px rgba(205,92,130,.10);
+  --ok:#1c9d67;
+  --warn:#d69b3d;
+  --danger:#d24a5a;
+  --blue:#5b7fff;
+}
+.mini-app[data-theme="blue"]{
+  --bg:#f5f9ff;
+  --surface:#ffffff;
+  --surface-2:#e9f1fe;
+  --ink:#17243f;
+  --muted:#7789ad;
+  --line:rgba(23,90,255,.12);
+  --accent:#2f6bff;
+  --accent-2:#dde9ff;
+  --on-accent:#ffffff;
+  --chip:#e7f0ff;
+  --chip-line:#c7dbff;
+  --soft-shadow:0 10px 26px rgba(47,107,255,.12);
+  --ok:#1c9d67;
+  --warn:#d69b3d;
+  --danger:#d24a5a;
+  --blue:#00b3a7;
+}
+
+.ic{width:18px;height:18px;display:block;flex:none}
+.ic-lg{width:22px;height:22px}
+.ic-sm{width:15px;height:15px}
+
+/* Top bars */
+.topbar{
+  flex:0 0 96px;background:var(--bg);position:relative;z-index:8;
+}
+.statusbar{
+  height:44px;display:flex;align-items:center;padding:0 16px 0 24px;gap:6px;
+  color:var(--ink);font-size:14px;font-weight:600;
+}
+.svg-icons{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--ink)}
+.statusbar .sig{display:flex;align-items:center;gap:3px}
+.statusbar .sig svg{width:15px;height:15px}
+.capsule{
+  position:absolute;top:7px;right:12px;width:86px;height:31px;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  color:var(--ink);font-size:15px;
+}
+.capsule span:first-child{letter-spacing:2px;font-weight:700;transform:translateY(-1px)}
+.navbar{
+  height:52px;display:flex;align-items:center;padding:0 14px;gap:8px;position:relative;
+}
+.nav-title{flex:1;text-align:center;font-size:17px;font-weight:650;letter-spacing:0}
+.nav-side{width:74px}
+.nav-action{
+  width:auto;height:32px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);border-radius:999px;font-size:12px;font-weight:550;
+  display:flex;align-items:center;gap:4px;padding:0 11px;
+}
+.nav-action.spinning svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Pages */
+.pages{flex:1;position:relative;overflow:hidden}
+.page{
+  position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;
+  display:none;padding:8px 16px 28px;
+  -webkit-overflow-scrolling:touch;
+}
+.page.active{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 12px}
+.eyebrow{font-size:12px;color:var(--muted);margin-bottom:3px}
+.page-title{font-size:26px;line-height:1.12;font-weight:750;letter-spacing:0}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
+.side-note{font-size:11px;color:var(--muted);text-align:right;line-height:1.5}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:10px 12px;min-height:72px;
+}
+.stat-card.wide{grid-column:span 2}
+.stat-card.clickable{cursor:pointer;border-color:var(--chip-line);transition:transform .12s,border-color .12s}
+.stat-card.clickable:active{transform:scale(.97);border-color:var(--accent)}
+.stat-num-line{display:flex;align-items:center;gap:4px}
+.red-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);flex:none}
+.red-dot[hidden]{display:none}
+.stat-num{font-size:24px;font-weight:750;letter-spacing:0;line-height:1.15}
+.stat-label{font-size:11px;color:var(--muted);margin-top:3px}
+.stat-label strong{color:var(--ink)}
+
+/* Segmented filters */
+.seg{
+  position:sticky;top:0;z-index:5;display:flex;gap:4px;padding:6px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
+  margin-bottom:12px;width:100%;
+}
+.seg button{
+  flex:1;height:30px;border:0;background:transparent;border-radius:999px;
+  font-size:12px;color:var(--muted);white-space:nowrap;
+}
+.seg button.active{background:var(--accent);color:var(--on-accent);font-weight:600}
+
+/* Day groups / todo cards */
+.day-group{margin-bottom:14px}
+.day-head{
+  display:flex;align-items:center;gap:8px;margin:2px 2px 8px;
+  font-size:13px;color:var(--ink);
+}
+.day-head strong{font-weight:650}
+.day-head .count{color:var(--muted);font-size:11px}
+.day-head::after{
+  content:"";flex:1;height:1px;background:var(--line);
+}
+.todo-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:12px;margin-bottom:9px;cursor:pointer;
+}
+.todo-card.done{opacity:.68}
+.todo-top{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.type-tag{
+  height:22px;padding:0 8px;border-radius:999px;font-size:10px;line-height:20px;
+  background:var(--chip);color:var(--accent);border:1px solid var(--chip-line);
+  font-weight:600;
+}
+.mode-pill{
+  height:22px;padding:0 8px;border-radius:999px;font-size:10px;line-height:22px;
+  background:var(--surface-2);color:var(--muted);
+}
+.mini-hint{margin-left:auto;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:3px}
+.todo-title{font-size:16px;font-weight:650;letter-spacing:0;margin-bottom:4px}
+.todo-meta{font-size:12px;color:var(--muted);margin-bottom:9px}
+.todo-line{
+  display:flex;align-items:center;gap:6px;background:var(--surface-2);
+  border-radius:6px;padding:7px 9px;font-size:11px;color:var(--ink);
+  min-width:0;
+}
+.line-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy-btn{
+  height:24px;padding:0 8px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--accent);font-size:10px;flex:none;
+}
+.card-foot{display:flex;gap:8px;margin-top:10px}
+.btn{
+  flex:1;height:36px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-ghost{color:var(--muted)}
+
+/* Mail */
+.mail-intro{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:11px 12px;display:flex;align-items:center;gap:9px;margin-bottom:10px;
+}
+.ai-chip{
+  flex:none;height:22px;padding:0 8px;border-radius:999px;background:var(--chip);
+  border:1px solid var(--chip-line);color:var(--accent);font-size:10px;font-weight:600;
+  display:flex;align-items:center;gap:4px;
+}
+.intro-copy{flex:1;min-width:0;font-size:11px;color:var(--muted);line-height:1.4}
+.mail-row{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:12px;margin-bottom:9px;display:flex;gap:10px;cursor:pointer;align-items:flex-start;
+}
+.mail-logo{
+  width:38px;height:38px;border-radius:8px;color:#fff;font-style:normal;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  flex:none;
+}
+.mail-main{flex:1;min-width:0}
+.mail-subject{
+  font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;
+  min-width:0;
+}
+.mail-subject span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.unread-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);flex:none}
+.mail-snip{
+  font-size:11px;color:var(--muted);margin-top:4px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.mail-foot-row{
+  display:flex;align-items:center;justify-content:space-between;margin-top:7px;
+  font-size:10px;color:var(--muted);
+}
+.status-tag{
+  height:20px;padding:0 7px;border-radius:999px;background:var(--surface-2);
+  color:var(--muted);font-size:10px;line-height:20px;
+}
+.status-tag.hot{background:var(--chip);color:var(--accent);border:1px solid var(--chip-line)}
+.status-tag.ok{background:rgba(28,157,103,.12);color:var(--ok)}
+.status-tag.off{background:var(--surface-2);color:var(--muted)}
+
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;margin:14px 2px 9px;
+}
+.section-head h2{font-size:16px;font-weight:700}
+.section-head span{font-size:11px;color:var(--muted)}
+.prog-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:12px;margin-bottom:9px;
+}
+.company-group{margin-bottom:14px}
+.company-group .prog-card{margin-bottom:8px}
+.company-group .prog-card:last-child{margin-bottom:0}
+.company-head{display:flex;align-items:center;gap:9px;margin:2px 2px 9px}
+.company-head .company-logo{width:34px;height:34px;font-size:11px}
+.company-head-name{flex:1;min-width:0}
+.company-head-name b{display:block;font-size:14px;font-weight:650}
+.company-head-name span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.prog-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.prog-company{flex:1;min-width:0}
+.prog-company b{display:block;font-size:14px;font-weight:650}
+.prog-company span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.step-row{display:flex;align-items:center;margin-bottom:10px}
+.step{
+  flex:1;text-align:center;font-size:9px;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
+}
+.step i{
+  width:14px;height:14px;border-radius:50%;background:var(--surface-2);
+  border:1px solid var(--line);display:block;position:relative;
+}
+.step.done{color:var(--ok)}
+.step.done i{background:var(--ok);border-color:var(--ok)}
+.step.done i::after{
+  content:"";position:absolute;left:4px;top:2px;width:4px;height:7px;
+  border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg);
+}
+.step.waiting i{
+  background:var(--accent);border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-2);
+}
+.step.waiting{color:var(--accent);font-weight:600}
+.step.ended i{background:var(--surface-2);border-color:var(--muted)}
+.step.ended{color:var(--muted)}
+.step.ended i::before,.step.ended i::after{
+  content:"";position:absolute;left:3px;top:5px;width:6px;height:1.6px;
+  border-radius:2px;background:var(--muted);
+}
+.step.ended i::before{transform:rotate(45deg)}
+.step.ended i::after{transform:rotate(-45deg)}
+.step-line{flex:0 0 12px;height:1px;background:var(--line)}
+.step.done + .step-line{background:var(--ok)}
+.prog-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border-top:1px solid var(--line);padding-top:9px;
+}
+.prog-note{flex:1;min-width:0;font-size:11px;color:var(--muted)}
+.mini-btn{
+  height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-size:11px;flex:none;
+}
+.mini-btn.fill{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+.achieve-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:14px;margin-bottom:12px;
+}
+.achieve-hero{display:flex;align-items:flex-end;gap:12px}
+.achieve-hero b{
+  font-size:46px;line-height:.92;font-weight:800;letter-spacing:0;color:var(--accent);
+}
+.achieve-hero strong{display:block;font-size:15px;font-weight:700}
+.achieve-hero small{display:block;font-size:11px;color:var(--muted);margin-top:5px;font-weight:400}
+.achieve-rate{
+  display:flex;gap:8px;margin-top:15px;padding-top:12px;
+  border-top:1px solid var(--line);
+}
+.achieve-rate span{
+  flex:1;text-align:center;background:var(--surface-2);border-radius:8px;
+  padding:7px 4px;font-size:10px;color:var(--muted);
+}
+.achieve-rate b{display:block;color:var(--ink);font-size:15px;margin-top:2px;font-weight:750}
+.achieve-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.achieve-tile{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:11px 8px;text-align:center;min-width:0;
+}
+.achieve-tile b{display:block;font-size:21px;font-weight:750;letter-spacing:0}
+.achieve-tile span{display:block;font-size:10px;color:var(--muted);margin-top:3px}
+.chart-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:12px;margin-bottom:10px;
+}
+.chart-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:650;margin-bottom:10px}
+.chart-title span{font-size:10px;color:var(--muted);font-weight:400}
+.chart-note{font-size:10px;color:var(--muted);line-height:1.6;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.trend-chart{display:flex;align-items:flex-end;gap:5px;height:132px;padding:4px 2px 0}
+.trend-col{
+  flex:1;height:100%;min-width:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;gap:4px;
+}
+.trend-num{font-size:9px;font-weight:600;color:var(--muted);height:12px;line-height:12px}
+.trend-bar{
+  width:13px;flex:1;min-height:8px;display:flex;align-items:flex-end;
+  border-radius:5px;background:var(--surface-2);overflow:hidden;
+}
+.trend-bar i{display:block;width:100%;border-radius:5px;background:var(--accent);opacity:.9}
+.trend-bar i.blank{background:var(--line);opacity:.55}
+.trend-label{font-size:8px;color:var(--muted);white-space:nowrap}
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:10px;color:var(--muted)}
+.chart-legend i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:1px}
+.chart-legend b{color:var(--ink);font-weight:650}
+.gain-stack{
+  display:flex;gap:2px;height:14px;border-radius:999px;overflow:hidden;
+  background:var(--surface-2);
+}
+.gain-seg{height:100%}
+.gain-seg.exam{background:var(--blue)}
+.gain-seg.iv{background:var(--accent)}
+.gain-seg.off{background:var(--ok)}
+
+/* Calendar */
+.calendar-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:12px;margin-bottom:12px;
+}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-title{font-size:15px;font-weight:650}
+.cal-nav{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-size:17px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.cal-week{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;
+  text-align:center;font-size:10px;color:var(--muted);
+}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{
+  aspect-ratio:1.08;border-radius:7px;border:1px solid transparent;
+  background:var(--surface-2);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;font-size:12px;color:var(--ink);cursor:pointer;min-width:0;
+}
+.cal-cell.blank{background:transparent;border-color:transparent;cursor:default}
+.cal-cell.today{border-color:var(--chip-line);background:var(--chip)}
+.cal-cell.selected{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.cal-cell .cal-num{line-height:1}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex:none}
+.cal-cell.selected .cal-dot{background:var(--on-accent)}
+.cal-item{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:9px;cursor:pointer;
+}
+.cal-time{
+  flex:0 0 52px;text-align:center;font-size:9px;color:var(--muted);line-height:1.25;
+}
+.cal-time b{display:block;font-size:14px;color:var(--ink);font-weight:700;line-height:1.1}
+.cal-item-main{flex:1;min-width:0}
+.cal-item-title{
+  display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;min-width:0;
+}
+.cal-item-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-item-sub{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:4px;min-width:0}
+.cal-item-sub span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-item-sub .source{flex:none}
+
+/* Timeline */
+.timeline{position:relative;padding-left:20px}
+.timeline::before{
+  content:"";position:absolute;left:5px;top:8px;bottom:8px;width:2px;
+  background:var(--line);border-radius:2px;
+}
+.timeline-item{position:relative;padding:0 0 14px 8px}
+.timeline-item::before{
+  content:"";position:absolute;left:-18px;top:4px;width:10px;height:10px;
+  border-radius:50%;background:var(--accent);border:2px solid var(--bg);
+}
+.timeline-item.now::before{box-shadow:0 0 0 4px var(--accent-2)}
+.timeline-item:last-child{padding-bottom:0}
+.tl-date{font-size:11px;color:var(--muted)}
+.tl-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:10px 12px;margin-top:4px;display:flex;align-items:center;gap:8px;
+}
+.tl-card b{flex:1;font-size:13px;font-weight:600}
+.tl-card span{font-size:10px;color:var(--muted)}
+
+/* Mine */
+.profile-card{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:8px;padding:13px;
+}
+.avatar{
+  width:42px;height:42px;border-radius:8px;background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;
+}
+.profile-main{flex:1;min-width:0}
+.profile-name{font-size:15px;font-weight:650}
+.profile-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.online-state{
+  height:22px;padding:0 8px;border-radius:999px;background:rgba(28,157,103,.12);
+  color:var(--ok);font-size:10px;display:flex;align-items:center;gap:4px;flex:none;
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block}
+.setting-group{margin-top:16px}
+.group-title{font-size:12px;color:var(--muted);margin:0 2px 8px;font-weight:550}
+.setting-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  overflow:hidden;
+}
+.setting-row{
+  display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--line);
+  cursor:pointer;
+}
+.setting-row:last-child{border-bottom:0}
+.service-logo{
+  width:30px;height:30px;border-radius:6px;color:#fff;font-style:normal;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex:none;
+}
+.setting-main{flex:1;min-width:0}
+.setting-label{font-size:13px;font-weight:550}
+.setting-sub{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bind-btn{
+  height:26px;padding:0 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);font-size:10px;color:var(--ink);flex:none;
+}
+.bind-btn.connected{color:var(--ok);border-color:rgba(28,159,103,.35);background:rgba(28,159,103,.08)}
+.add-row{
+  margin-top:9px;height:38px;border:1px dashed var(--line);border-radius:8px;
+  background:var(--surface);color:var(--muted);font-size:12px;
+  display:flex;align-items:center;justify-content:center;gap:5px;width:100%;
+}
+.switch{position:relative;width:42px;height:24px;flex:none}
+.switch input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.switch .track{
+  position:absolute;inset:0;border-radius:999px;background:var(--line);
+  transition:.2s;
+}
+.switch .track::after{
+  content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;
+  border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);
+  transition:transform .2s;
+}
+.switch input:checked + .track{background:var(--accent)}
+.switch input:checked + .track::after{transform:translateX(18px)}
+.chevron-row{color:var(--muted);display:flex;align-items:center;gap:2px;font-size:12px}
+.theme-box{padding:10px 12px}
+.theme-options{display:flex;gap:8px}
+.theme-option{
+  flex:1;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.theme-option.active{border-color:var(--accent);color:var(--accent);background:var(--accent-2)}
+.swatch{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.08)}
+.swatch.pink{background:#f6c4d3}
+.swatch.blue{background:#9ec0ff}
+
+/* Tabbar */
+.tabbar{
+  flex:0 0 62px;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:8px;
+}
+.tab{
+  border:0;background:transparent;color:var(--muted);position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:10px;
+}
+.tab .ic{width:20px;height:20px}
+.tab.active{color:var(--accent);font-weight:600}
+.tab-badge{
+  position:absolute;top:5px;left:calc(50% + 7px);min-width:15px;height:15px;
+  padding:0 4px;border-radius:999px;background:var(--danger);color:#fff;
+  font-size:9px;line-height:15px;font-style:normal;display:flex;align-items:center;justify-content:center;
+}
+.tab-badge[hidden]{display:none}
+
+/* Sheets */
+.mask{
+  position:absolute;inset:0;background:rgba(10,10,12,.32);opacity:0;pointer-events:none;
+  transition:opacity .18s;
+}
+.mask.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;max-height:78%;
+  background:var(--bg);border-radius:16px 16px 0 0;z-index:20;
+  transform:translateY(105%);transition:transform .22s ease;
+  display:flex;flex-direction:column;box-shadow:0 -12px 36px rgba(0,0,0,.12);
+}
+.sheet.show{transform:translateY(0)}
+.handle{width:36px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 2px;flex:none}
+.sheet-head{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 16px 10px;
+}
+.sheet-title{font-size:17px;font-weight:650}
+.close-btn{
+  width:28px;height:28px;border-radius:50%;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;
+}
+.sheet-body{overflow-y:auto;padding:0 16px 16px;flex:1}
+.sheet-foot{
+  display:flex;gap:8px;padding:10px 16px 18px;border-top:1px solid var(--line);
+  background:var(--bg);flex:none;
+}
+.sheet-foot .btn{flex:1}
+
+.detail-company{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;
+}
+.company-logo{
+  width:38px;height:38px;border-radius:8px;background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none;
+}
+.company-name{font-size:14px;font-weight:650}
+.company-role{font-size:11px;color:var(--muted);margin-top:2px}
+.detail-mode{
+  margin-left:auto;height:22px;padding:0 8px;border-radius:999px;background:var(--chip);
+  color:var(--accent);font-size:10px;line-height:22px;border:1px solid var(--chip-line);
+}
+.info-row{
+  display:grid;grid-template-columns:20px 58px 1fr;gap:8px;align-items:start;
+  padding:10px 2px;border-bottom:1px solid var(--line);font-size:12px;
+}
+.info-row:last-child{border-bottom:0}
+.info-label{color:var(--muted);font-size:11px;padding-top:2px}
+.info-value{min-width:0;word-break:break-word;color:var(--ink);line-height:1.55}
+.info-value .tag-row{display:flex;flex-wrap:wrap;gap:5px}
+.mini-tag{
+  height:20px;padding:0 8px;border-radius:999px;background:var(--surface-2);
+  color:var(--muted);font-size:10px;line-height:20px;
+}
+.copy-inline{
+  color:var(--accent);display:inline-flex;align-items:center;gap:2px;margin-left:5px;cursor:pointer;
+}
+
+.ai-panel{
+  background:var(--surface);border:1px solid var(--chip-line);border-radius:8px;
+  padding:12px;margin:12px 0;
+}
+.ai-head{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:650;color:var(--accent);margin-bottom:9px}
+.ai-status{margin-left:auto;font-size:10px;font-weight:400;color:var(--muted)}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ai-field{background:var(--surface-2);border-radius:6px;padding:8px}
+.ai-field label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px}
+.ai-field b{font-size:12px;font-weight:600;word-break:break-word;line-height:1.4;color:var(--ink);display:block}
+.ai-field.full{grid-column:1 / -1}
+.mail-body{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:12px;font-size:12px;line-height:1.75;color:var(--ink);white-space:pre-wrap;word-break:break-word;
+}
+.source-line{display:flex;align-items:center;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--muted)}
+.toast{
+  position:absolute;left:50%;bottom:92px;transform:translate(-50%,12px);z-index:40;
+  background:#202024;color:#fff;font-size:12px;padding:9px 16px;border-radius:999px;
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:82vw;
+  text-overflow:ellipsis;overflow:hidden;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.empty-box{
+  text-align:center;color:var(--muted);font-size:12px;padding:36px 0;
+}
+.row-ic{width:18px;height:18px;flex:none;color:var(--muted)}
+.oauth-state{display:flex;flex-direction:column;align-items:center;padding:34px 0;gap:9px;text-align:center}
+.spinner{
+  width:30px;height:30px;border-radius:50%;border:3px solid var(--accent-2);
+  border-top-color:var(--accent);animation:spin .8s linear infinite;
+}
+.spinner+.text{font-size:14px;font-weight:600}
+small{color:var(--muted);font-size:11px}
+.result-steps{display:flex;flex-direction:column;gap:7px;margin:10px 0}
+.result-step{
+  display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+}
+.result-step.current{color:var(--accent);font-weight:600}
+.result-step.done{color:var(--ok)}
+.progress-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.row-actions{display:flex;gap:8px;margin-top:8px;width:100%}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" id="phone">
+    <div class="screen">
+      <div class="mini-app" id="miniApp" data-theme="pink">
+        <header class="topbar">
+          <div class="statusbar">
+            <span id="clockText">9:41</span>
+            <span class="svg-icons">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.5 14.5h3.2v5H2.5zM7.3 11h3.2v8.5H7.3zM12.1 8h3.2v11.6h-3.2zM16.9 4.5h3.2v15h-3.2z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 18.5C5.2 15 9 13 13.6 13c1.1 0 2.2.2 3.4.5"/><path d="M17 17.5v-3.6l3.6 4.6a2 2 0 0 1-1.7 3.3 2 2 0 0 1-1.4-.7Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2.5" y="7" width="15" height="10" rx="2.5"/><path d="M21 10v4"/></svg>
+            </span>
+          </div>
+          <div class="capsule"><span>●●●</span><span>○</span></div>
+          <nav class="navbar">
+            <span class="nav-side"></span>
+            <h1 class="nav-title" id="navTitle">小邮差</h1>
+            <span class="nav-side" style="display:flex;justify-content:flex-end">
+              <button class="nav-action" id="navAction" onclick="navSync()" title="同步邮件">
+                <svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 6.2"/><path d="M20 4v7h-7"/></svg>
+                <span id="navActionText">同步</span>
+              </button>
+            </span>
+          </nav>
+        </header>
+
+        <main class="pages">
+          <section class="page active" data-page="todo" id="pageTodo">
+            <div class="page-head">
+              <div>
+                <h1 class="page-title">安排</h1>
+              </div>
+              <span class="side-note" id="arrangeSummary">下 1 场 · 09/15 10:30</span>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <p class="stat-num" id="todayNum">2</p>
+                <p class="stat-label">今天</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-num" id="openNum">4</p>
+                <p class="stat-label">待参加</p>
+              </div>
+              <div class="stat-card clickable" onclick="openPendingMails()">
+                <p class="stat-num stat-num-line"><span id="pendingMailNum">2</span><i class="red-dot" id="pendingMailDot" hidden></i></p>
+                <p class="stat-label">待确认邮件</p>
+              </div>
+            </div>
+            <div class="seg" id="arrangeSeg">
+              <button class="active" onclick="setArrangeView('list')">列表</button>
+              <button onclick="setArrangeView('calendar')">日历</button>
+            </div>
+            <div id="arrangeList">
+              <div class="seg" id="todoSeg">
+                <button class="active" onclick="setTodoFilter('all')">全部</button>
+                <button onclick="setTodoFilter('exam')">笔试</button>
+                <button onclick="setTodoFilter('interview')">面试</button>
+                <button onclick="setTodoFilter('done')">已完成</button>
+              </div>
+              <div id="todoList"></div>
+            </div>
+            <div id="arrangeCalendar" style="display:none">
+              <div class="calendar-card">
+                <div class="cal-head">
+                  <button class="cal-nav" onclick="shiftCalMonth(-1)" title="上个月">‹</button>
+                  <span class="cal-title" id="calTitle">2026年9月</span>
+                  <button class="cal-nav" onclick="shiftCalMonth(1)" title="下个月">›</button>
+                </div>
+                <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                <div class="cal-grid" id="calGrid"></div>
+              </div>
+              <div class="section-head">
+                <h2>当日日程</h2>
+                <span id="calDayLabel">9月14日 · 2 项</span>
+              </div>
+              <div id="calList"></div>
+            </div>
+          </section>
+
+          <section class="page" data-page="progress" id="pageProgress">
+            <div class="page-head">
+              <div>
+                <h1 class="page-title">进度</h1>
+              </div>
+              <span class="side-note" id="progressSub">本周有 3 场安排</span>
+            </div>
+            <div class="seg" id="progressSeg">
+              <button class="active" onclick="setProgressView('list')">公司流程</button>
+              <button onclick="setProgressView('dashboard')">战绩</button>
+            </div>
+            <div id="progressBody"></div>
+          </section>
+
+          <section class="page" data-page="mine" id="pageMine">
+            <div style="height:7px"></div>
+            <div class="page-head">
+              <div>
+                <h1 class="page-title">我的</h1>
+              </div>
+              <span class="side-note">设置与邮箱账号</span>
+            </div>
+            <div class="profile-card">
+              <div class="avatar">林</div>
+              <div class="profile-main">
+                <p class="profile-name">林同学</p>
+                <p class="profile-sub">已绑定 2 个邮箱 · 上次同步 09:02</p>
+              </div>
+              <span class="online-state"><i class="live-dot"></i>在线同步</span>
+            </div>
+
+            <div class="setting-group">
+              <p class="group-title">邮箱账号</p>
+              <div class="setting-card" id="bindList"></div>
+              <button class="add-row" onclick="openAddBind()">
+                <svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                添加邮箱
+              </button>
+            </div>
+
+            <div class="setting-group">
+              <p class="group-title">同步记录</p>
+              <div class="setting-card">
+                <div class="setting-row" onclick="openMailArchive()">
+                  <svg class="row-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m5 8.5 7 5 7-5"/></svg>
+                  <div class="setting-main">
+                    <p class="setting-label">邮箱同步记录</p>
+                    <p class="setting-sub" id="syncRecordNote">近 7 天 8 封 · 2 个邮箱</p>
+                  </div>
+                  <svg class="ic ic-sm" style="color:var(--muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <p class="group-title">外观</p>
+              <div class="setting-card">
+                <div class="theme-box">
+                  <div class="theme-options">
+                    <button class="theme-option active" data-theme="pink" onclick="setTheme('pink')"><span class="swatch pink"></span>粉白</button>
+                    <button class="theme-option" data-theme="blue" onclick="setTheme('blue')"><span class="swatch blue"></span>蓝白</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <p class="group-title">提醒</p>
+              <div class="setting-card">
+                <div class="setting-row">
+                  <svg class="row-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5h4"/></svg>
+                  <div class="setting-main">
+                    <p class="setting-label">笔试面试提醒</p>
+                    <p class="setting-sub">识别到新安排时推送</p>
+                  </div>
+                  <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+                </div>
+                <div class="setting-row">
+                  <svg class="row-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+                  <div class="setting-main">
+                    <p class="setting-label">考前 30 分钟提醒</p>
+                    <p class="setting-sub">考试 / 面试开始前提醒</p>
+                  </div>
+                  <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+                </div>
+                <div class="setting-row" onclick="showSetting()">
+                  <div class="setting-main">
+                    <p class="setting-label">每日汇总</p>
+                    <p class="setting-sub">每天 09:00 推送当天安排</p>
+                  </div>
+                  <span class="chevron-row">09:00<svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span>
+                </div>
+              </div>
+            </div>
+            <div class="setting-group">
+              <p class="group-title">数据与隐私</p>
+              <div class="setting-card">
+                <div class="setting-row" onclick="notify('仅同步邮件标题、发件人与识别结果')">
+                  <svg class="row-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6Z"/><path d="m9.5 12 1.8 1.8 3.6-3.8"/></svg>
+                  <div class="setting-main">
+                    <p class="setting-label">隐私与安全</p>
+                    <p class="setting-sub">只读取笔试 / 面试相关字段</p>
+                  </div>
+                  <svg class="ic ic-sm" style="color:var(--muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+                </div>
+                <div class="setting-row" onclick="notify('小邮差 · Demo v1.0.0')">
+                  <div class="setting-main">
+                    <p class="setting-label">关于小程序</p>
+                    <p class="setting-sub">Version 1.0.0</p>
+                  </div>
+                  <svg class="ic ic-sm" style="color:var(--muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <nav class="tabbar">
+          <button class="tab active" data-tab="todo" onclick="setTab('todo')">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="17" rx="3"/><path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"/></svg>
+            <span>安排</span>
+            <i class="tab-badge" id="arrangeBadge" hidden>0</i>
+          </button>
+          <button class="tab" data-tab="progress" onclick="setTab('progress')">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+            <span>进度</span>
+          </button>
+          <button class="tab" data-tab="mine" onclick="setTab('mine')">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>
+            <span>我的</span>
+          </button>
+        </nav>
+
+        <div class="mask" id="mask" onclick="closeSheets()"></div>
+        <div class="sheet" id="calSheet"></div>
+        <div class="sheet" id="todoSheet"></div>
+        <div class="sheet" id="mailSheet"></div>
+        <div class="sheet" id="progressSheet"></div>
+        <div class="sheet" id="bindSheet"></div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const $=(s,c=document)=>c.querySelector(s);
+const $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+function ic(name, cls="ic"){
+  const P={
+    calendar:'<rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>',
+    check:'<path d="m5 12 4.5 4.5L19 7"/>',
+    copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5.5 14.5h-1a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7L11.5 6.7"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.4"/>',
+    pin:'<path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+    mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m5 8.5 7 5 7-5"/>',
+    clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    bell:'<path d="M6.2 16.5h11.6l-1.3-2.2v-4.6a6 6 0 0 0-12 0v4.6Z"/><path d="M10 20h4"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    x:'<path d="M6 6l12 12M18 6 6 18"/>',
+    refresh:'<path d="M20 11a8 8 0 1 0-2.3 6.2"/><path d="M20 4v7h-7"/>',
+    send:'<path d="m3.5 11 17-7-6.5 17-3.2-7.3Z"/><path d="M3.5 11 20.5 4 10.8 13.7"/>',
+    file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+    trend:'<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    briefcase:'<rect x="3.5" y="7.5" width="17" height="13" rx="2.5"/><path d="M9 7.5V5.5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3.5 12.5h17"/>',
+    shield:'<path d="M12 3 5 6v5c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6Z"/><path d="m9.2 12 2 2 3.6-4"/>',
+    settings:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M4.2 7.5 6 8.5M18 15.5l1.8 1M4.2 16.5 6 15.5M18 8.5l1.8-1M3 12h2M19 12h2"/>',
+    sparkles:'<path d="m11.5 3 1.4 3.7L16.6 8l-3.7 1.3L11.5 13l-1.4-3.7L6.9 8l3.2-1.3Z"/><path d="m18.5 12.5.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z"/>',
+    target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/>',
+    eye:'<path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.7"/>',
+    home:'<path d="m3.5 11 8.5-7 8.5 7"/><path d="M5.5 9.5V20h13V9.5"/>'
+  };
+  return '<svg class="'+cls+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[name]||"")+'</svg>';
+}
+function toast(msg){
+  const el=$("#toast");
+  el.textContent=msg;
+  el.classList.add("show");
+  clearTimeout(window.__toastT);
+  window.__toastT=setTimeout(()=>el.classList.remove("show"),1800);
+}
+function notify(msg){ toast(msg); }
+
+/* ---------- mock 数据 ---------- */
+let todos=[
+  {id:"t1",company:"京东",type:"在线测评",cat:"exam",mode:"online",group:"今天 · 9月14日",day:"9月14日 周一",time:"14:00 - 14:50",role:"产品经理 · 2026 校招",short:"exams.jd.com",url:"https://exams.jd.com/2026/jd/9f3k2",address:"",mailId:"m1",done:false,tags:["限时 60 分钟","摄像头"]},
+  {id:"t2",company:"腾讯",type:"面试",cat:"interview",mode:"offline",group:"今天 · 9月14日",day:"9月14日 周一",time:"18:30 - 19:15",role:"产品策划 · 一面",short:"深圳腾讯云大厦",address:"深圳市南山区深南大道 9888 号腾讯云大厦 21 层 2108 室",mailId:"m2",done:false,tags:["携带身份证","提前 15 分钟"]},
+  {id:"t4",company:"哔哩哔哩",type:"面试",cat:"interview",mode:"offline",group:"9月16日 周三",day:"9月16日 周三",time:"14:00 - 14:45",role:"社区运营 · 一面",short:"上海新邻生活广场",address:"上海市黄浦区新邻生活广场 3F",mailId:"m4",done:false,tags:["二次确认邮件"]},
+  {id:"t5",company:"美团",type:"面试",cat:"interview",mode:"offline",group:"9月17日 周四",day:"9月17日 周四",time:"09:30 - 10:15",role:"商业分析 · 二面",short:"北京望京中心",address:"北京市朝阳区望京街 8 号望京中心 5 层",mailId:"m5",done:false,tags:["带正装"]},
+  {id:"t6",company:"网易",type:"笔试",cat:"exam",mode:"online",group:"已完成",day:"9月13日 周日",time:"14:00 - 15:30",role:"产品运营 · 笔试回执",short:"已结束",url:"https://ehr.netease.com/campus/cf",mailId:"m6",done:true,tags:["已完成"]}
+];
+
+let mails=[
+  {id:"m1",sender:"京东招聘",addr:"noreply@jd.com",initial:"JD",color:"#f03f3f",subject:"【京东2026】在线测评邀请函",time:"今天 08:02",status:"已生成待办",statusKey:"todo",unread:false,
+   ai:{company:"京东",type:"在线测评",cat:"exam",mode:"online",day:"9月14日 周一",time:"14:00 - 14:50",place:"",url:"https://exams.jd.com/2026/jd/9f3k2",role:"产品经理 · 2026 校招",tags:["限时 60 分钟","摄像头"]},
+   body:"林同学，你好：\n我们已收到你的简历申请，现邀请你参加京东 2026 秋季校园招聘【在线测评】。\n\n测评时间：9月14日 14:00 - 14:50\n考试网址：https://exams.jd.com/2026/jd/9f3k2\n\n请提前 10 分钟进入测评系统。"},
+  {id:"m2",sender:"腾讯招聘",recipient:"hr@tencent.com",initial:"TX",color:"#0b6cff",subject:"【腾讯】产品策划一面邀请函",time:"09:14",status:"已生成待办",statusKey:"todo",unread:true,
+   ai:{company:"腾讯",type:"面试",role:"产品策划 · 一面",mode:"offline",day:"9月14日 周一",time:"18:30 - 19:15",place:"深圳市南山区深南大道 9888 号腾讯云大厦 21 层 2108 室",url:"",tags:["携带身份证","提前 15 分钟"]},
+   body:"林同学，你好：\n恭喜你通过腾讯产品策划初筛，现邀请你参加一面。\n\n面谈时间：9月14日 18:30 - 19:15\n地点：深圳市南山区深南大道 9888 号腾讯云大厦 21 层 2108 室\n\n请携带身份证，提前 15 分钟到达前台签到。"},
+  {id:"m3",sender:"小米校园招聘",recipient:"campus@xiaomi.com",initial:"MI",color:"#ff6900",subject:"【小米】2026 校招统一笔试确认",time:"09:41",status:"待确认",statusKey:"pending",unread:true,
+    ai:{company:"小米",type:"笔试",role:"商业分析 · 笔试",mode:"online",day:"9月15日 周二",time:"10:30 - 11:30",place:"",url:"https://exams.xiaomi.com/next_21",tags:["限时 60 分钟","摄像头"]},
+   body:"林同学，你好：\n你的小米 2026 校园招聘申请已进入笔试环节。系统为你安排了 9月15日 10:30 的在线笔试。\n\n考试网址：https://exams.xiaomi.com/next_21\n考试时长：60 分钟\n\n请点击下方按钮确认参加。"},
+  {id:"m4",sender:"哔哩哔哩 HR",recipient:"hr@bilibili.com",initial:"BL",color:"#ff5c77",subject:"社区运营岗位一面面试安排",time:"昨天 19:20",status:"已生成待办",statusKey:"todo",unread:false,
+    ai:{company:"哔哩哔哩",type:"面试",role:"社区运营 · 一面",mode:"offline",day:"9月16日 周三",time:"14:00 - 14:45",place:"上海市黄浦区新邻生活广场 3F",url:"",tags:["二次确认"]},
+    body:"林同学，你好：\n感谢应聘哔哩哔哩社区运营岗位。\n\n面谈时间：9月16日 14:00\n地点：上海市黄浦区新邻生活广场 3F\n\n到岗请向前台报 \u201C校招面试\u201D。"},
+  {id:"m5",sender:"美团招聘",recipient:"campus@meituan.com",initial:"MT",color:"#f5c518",subject:"商业分析 · 秋招二面邀请",time:"昨天 16:05",status:"已生成待办",statusKey:"todo",unread:true,
+    ai:{company:"美团",type:"面试",role:"商业分析 · 二面",mode:"offline",day:"9月17日 周四",time:"09:30 - 10:15",place:"北京市朝阳区望京街 8 号望京中心 5 层",url:"",tags:["带正装"]},
+    body:"林同学，你好：\n你已通过美团商业分析岗位的一面，现邀请参加二面。\n\n面试时间：9月17日 09:30\n地点：北京市朝阳区望京街 8 号望京中心 5 层\n\n如无法出席，请提前 48 小时联系。"},
+  {id:"m6",sender:"网易招聘",addr:"campus@163.com",initial:"NB",color:"#243b74",subject:"2026 校招笔试确认（已完成）",time:"9月12日",status:"已生成待办",statusKey:"todo",unread:false,
+    ai:{company:"网易",type:"笔试",role:"产品经理 · 笔试回执",mode:"online",day:"9月13日 周日",time:"14:00 - 15:30",place:"",url:"https://ehr.netease.com/campus/x",tags:["已完成"]},
+    body:"您的网易校招笔试时间已确认：9月13日 14:00-15:30（线上）。\n祝答题顺利。"},
+  {id:"m7",sender:"泡泡玛特",addr:"hr@popmart.com",initial:"PT",color:"#7d6cf0",subject:"【宣讲】泡泡玛特 2026 校园宣讲会邀请",time:"9月12日",status:"自动忽略",statusKey:"none",unread:false,
+    ai:null,
+    body:"林同学，你好：欢迎参加泡泡玛特广州站校园宣讲会。\n时间：9月20日 15:00\n场地：初心图书馆报告厅。\n\n识别结果：活动类邮件，未生成待办。"},
+  {id:"m8",sender:"字节跳动招聘",recipient:"hr@bytedance.com",initial:"BY",color:"#0a2540",subject:"【字节跳动】产品经理一面邀请",time:"今天 09:58",status:"待确认",statusKey:"pending",unread:true,
+    ai:{company:"字节跳动",type:"面试",role:"产品经理 · 一面",mode:"offline",day:"9月18日 周五",time:"10:00 - 10:45",place:"北京市海淀区知春路甲 63 号字节跳动大厦 6F",url:"",tags:["带简历","提前 20 分钟"]},
+    body:"林同学，你好：\n我们已收到你的笔试结果，现邀请你参加产品经理岗位一面。\n\n面试时间：9月18日 10:00 - 10:45\n地点：北京市海淀区知春路甲 63 号字节跳动大厦 6 层\n\n请携带身份证。"}
+];
+
+let mailboxes=[
+  {id:"qq",mark:"QQ",name:"QQ 邮箱",account:"5209***@qq.com",bound:true,color:"#4f8bfb",note:"当前活跃"},
+  {id:"126",mark:"126",name:"网易 126 邮箱",account:"lin.stary@126.com",bound:true,color:"#ed424b",note:"近 7 天 8 封"},
+  {id:"hotmail",mark:"OUT",name:"Hotmail / Outlook",account:"",bound:false,color:"#0b5bd6",note:"Microsoft 账号"},
+  {id:"gmail",mark:"G",name:"Gmail",account:"",bound:false,color:"#ea4335",note:"Google 账号"}
+];
+
+let progress=[
+  {id:"p1",company:"京东",role:"产品经理",source:"QQ 邮箱",updated:"邮件 09/14",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"done"}],next:"一面 · 待通知"},
+  {id:"p2",company:"腾讯",role:"产品策划",source:"QQ 邮箱",updated:"邮件 09/14",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"done"},{name:"一面",state:"pending"}],next:"一面 09/14 18:30"},
+  {id:"p3",company:"小米",role:"商业分析",source:"126 邮箱",updated:"邮件 09/14",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"pending"}],next:"笔试 09/15 10:30"},
+  {id:"p4",company:"哔哩哔哩",role:"社区运营",source:"126 邮箱",updated:"邮件 09/13",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"一面",state:"pending"}],next:"一面 09/16 14:00"},
+  {id:"p5",company:"美团",role:"商业分析",source:"QQ 邮箱",updated:"邮件 09/13",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"done"},{name:"一面",state:"done"},{name:"二面",state:"pending"}],next:"二面 09/17 09:30"},
+  {id:"p6",company:"网易",role:"产品运营",source:"126 邮箱",updated:"邮件 09/12",result:"reject",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"ended"}],next:"流程已结束"},
+  {id:"p7",company:"字节跳动",role:"产品经理",source:"126 邮箱",updated:"邮件 09/14",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"done"},{name:"一面",state:"pending"}],next:"一面 09/18 10:00"},
+  {id:"p8",company:"拼多多",role:"运营管培",source:"QQ 邮箱",updated:"邮件 09/11",result:"offer",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"done"},{name:"一面",state:"done"},{name:"Offer",state:"done"}],next:"Offer 沟通中"},
+  {id:"p9",company:"字节跳动",role:"商业分析师",source:"126 邮箱",updated:"邮件 09/15",result:"",
+   steps:[{name:"已投递",state:"done"},{name:"笔试",state:"pending"}],next:"笔试 09/16 09:30"}
+];
+let theme="pink",currentTab="todo",todoFilter="all",mailFilter="all",progressView="list",arrangeView="list",calYear=2026,calMonth=8,calDay="9月14日";
+
+/* ---------- 统计 ---------- */
+function unreadCount(){return mails.filter(m=>m.unread).length}
+function todoOpen(){return todos.filter(t=>!t.done).length}
+function todoToday(){return todos.filter(t=>!t.done && String(t.group||"").startsWith("今天")).length}
+function pendingMail(){return mails.filter(m=>m.statusKey==="pending").length}
+function doneMail(){return mails.filter(m=>m.statusKey==="todo"&&todos.some(t=>t.mailId===m.id&&t.done)).length}
+
+/* ---------- 渲染 -------- */
+function renderAll(){
+  renderTodo();
+  renderCalendar();
+  renderMails();
+  renderProgress();
+  renderBindings();
+  renderBadges();
+}
+function renderBadges(){
+  const today=todoToday();
+  const pm=pendingMail();
+  const ab=$("#arrangeBadge");
+  ab.textContent=pm>9?"9+":String(pm);
+  ab.hidden=!pm;
+  $("#todayNum").textContent=today;
+  $("#openNum").textContent=todoOpen();
+  $("#pendingMailNum").textContent=pm;
+  const dot=$("#pendingMailDot");
+  if(dot)dot.hidden=!pm;
+  const open=todos.filter(t=>!t.done);
+  const dayScore=s=>{
+    const m={"9月13日":-1,"9月14日":0,"9月15日":1,"9月16日":2,"9月17日":3,"9月18日":4,"9月20日":5};
+    return m[(s||"").split(" ")[0]]??50;
+  };
+  const nextTask=open.sort((a,b)=>dayScore(a.day)-dayScore(b.day)||a.time.localeCompare(b.time))[0];
+  $("#arrangeSummary").textContent=nextTask?`下一场 · ${nextTask.day.split(" ")[0]} ${nextTask.time}`:"暂无近期日程";
+  $("#syncRecordNote").textContent=`近 7 天 ${mails.length} 封 · ${unreadCount()} 封未读`;
+  const apps=progress.length;
+  const cos=new Set(progress.map(p=>p.company)).size;
+  $("#progressSub").textContent=`${apps} 个岗位 · ${cos} 家公司 · ${progress.filter(p=>!p.result).length} 条进行中`;
+}
+function renderNav(){
+  $("#navTitle").textContent="小邮差";
+  $("#navAction").style.display=currentTab==="mine"?"none":"flex";
+}
+
+function todoCard(t){
+  const lineIcon=t.mode==="online"?"link":"pin";
+  const line = t.mode==="online" ? (t.url||t.short) : (t.address||t.short||"线下");
+  return `
+  <article class="todo-card ${t.done?"done":""}" onclick="openTodo('${t.id}')">
+    <div class="todo-top">
+      <span class="type-tag">${t.type}</span>
+      <span class="mode-pill">${t.mode==="online"?"线上":"线下"}</span>
+      <span class="mini-hint">${t.done?"已完成":t.cat==="exam"?"笔试":"面试"}</span>
+    </div>
+    <h3 class="todo-title">${t.company} · ${t.role}</h3>
+    <p class="todo-meta">${t.day} ${t.time}</p>
+    <div class="todo-line">
+      ${ic(lineIcon)}
+      <span class="line-text">${esc(line)}</span>
+      <button class="copy-btn" onclick="event.stopPropagation();copyTodoLine('${t.id}')">复制</button>
+    </div>
+    <div class="card-foot">
+      <button class="btn ${t.done?"btn-ghost":"btn-primary"}" onclick="event.stopPropagation();toggleTodo('${t.id}')">${t.done?"恢复":"标为完成"}</button>
+    </div>
+  </article>`;
+}
+function renderTodo(){
+  let list=[...todos];
+  if(todoFilter==="exam")list=list.filter(t=>!t.done&&t.cat==="exam");
+  if(todoFilter==="interview")list=list.filter(t=>!t.done&&t.cat==="interview");
+  if(todoFilter==="done")list=list.filter(t=>t.done);
+  const groups=[];
+  list.forEach(t=>{
+    const key=t.done?"已完成":(t.group||"其他");
+    let g=groups.find(x=>x.key===key);
+    if(!g){g={key,items:[]};groups.push(g)}
+    g.items.push(t);
+  });
+  groups.sort((a,b)=>{
+    const map={"今天 · 9月14日":0,"明天 · 9月15日":1,"9月16日 周三":2,"9月17日 周四":3,"9月18日 周五":4,"已完成":99};
+    const r=g=>map[g]??50;
+    return r(a.key)-r(b.key);
+  });
+  if(!groups.length){$("#todoList").innerHTML='<div class="empty-box">这里暂时没有待办</div>';return}
+  $("#todoList").innerHTML=groups.map(g=>`
+    <div class="day-group">
+      <div class="day-head"><strong>${g.key}</strong><span class="count">${g.items.length} 场</span></div>
+      ${g.items.map(todoCard).join("")}
+    </div>
+  `).join("");
+  $$("#todoSeg button").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")===`setTodoFilter('${todoFilter}')`));
+}
+
+function renderMails(){
+  if(!$("#mailList"))return;
+  let list=[...mails];
+  if(mailFilter==="pending")list=list.filter(m=>m.statusKey==="pending");
+  if(mailFilter==="todo")list=list.filter(m=>m.statusKey==="todo");
+  if(mailFilter==="none")list=list.filter(m=>m.statusKey==="none");
+  $("#mailList").innerHTML=list.map(m=>`
+    <div class="mail-row" onclick="openMail('${m.id}')">
+      <i class="mail-logo" style="background:${m.color||"var(--accent)"}">${m.initial||m.company[0]}</i>
+      <div class="mail-main">
+        <p class="mail-subject"><span>${m.subject}${m.unread?'<i class="unread-dot"></i>':""}</span></p>
+        <p class="mail-snip">${m.sender}${m.ai?" · "+m.ai.company+" "+m.ai.type:""} · ${m.time}</p>
+        <div class="mail-foot-row">
+          <span>${m.time}</span>
+          <span class="right"><span class="status-tag ${m.statusKey==="pending"?"hot":m.statusKey==="todo"?"ok":""}">${m.status}</span></span>
+        </div>
+      </div>
+    </div>
+  `).join("")||'<div class="empty-box">这里没有符合条件的邮件</div>';
+  $$("#mailSeg button").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")===`setMailFilter('${mailFilter}')`));
+}
+
+/* ---------- 日历 ---------- */
+function findMail(id){return mails.find(m=>m.id===id)}
+function scheduleItems(){
+  const out=[];
+  todos.forEach(t=>{
+    const m=findMail(t.mailId)||{};
+    out.push({
+      id:"t-"+t.id,
+      dayKey:(t.day||"").split(" ")[0],
+      day:t.day,
+      time:t.time,
+      company:t.company,
+      type:t.type,
+      role:t.role,
+      mode:t.mode,
+      status:t.done?"已完成":"待参加",
+      subject:m.subject||"邮件原文",
+      sender:m.sender||"",
+      body:m.body||"",
+      mailId:t.mailId
+    });
+  });
+  mails.forEach(m=>{
+    if(m.ai&&m.ai.day&&!todos.some(t=>t.mailId===m.id)){
+      out.push({
+        id:"m-"+m.id,
+        dayKey:(m.ai.day||"").split(" ")[0],
+        day:m.ai.day,
+        time:m.ai.time,
+        company:m.ai.company||m.sender,
+        type:m.ai.type||"日程",
+        role:m.ai.role||"",
+        mode:m.ai.mode,
+        status:m.status==="待确认"?"待确认":"待参加",
+        subject:m.subject,
+        sender:m.sender,
+        body:m.body,
+        mailId:m.id
+      });
+    }
+  });
+  return out;
+}
+function shiftCalMonth(delta){
+  calMonth+=delta;
+  if(calMonth<0){calMonth=11;calYear--}
+  if(calMonth>11){calMonth=0;calYear++}
+  calDay=null;
+  renderCalendar();
+}
+function renderCalendar(){
+  const items=scheduleItems();
+  const first=new Date(calYear,calMonth,1);
+  const start=(first.getDay()+6)%7;
+  const days=new Date(calYear,calMonth+1,0).getDate();
+  $("#calTitle").textContent=`${calYear}年${calMonth+1}月`;
+  let html="";
+  for(let i=0;i<start;i++)html+='<div class="cal-cell blank"></div>';
+  for(let d=1;d<=days;d++){
+    const key=`${calMonth+1}月${d}日`;
+    const has=items.some(x=>x.dayKey===key);
+    const sel=calDay===key;
+    const today=key==="9月14日";
+    html+=`<button class="cal-cell ${sel?"selected":""} ${today?"today":""}" onclick="selectCalDay('${key}')"><span class="cal-num">${d}</span>${has?'<i class="cal-dot"></i>':""}</button>`;
+  }
+  $("#calGrid").innerHTML=html;
+  renderCalList();
+}
+function selectCalDay(key){calDay=key;renderCalendar()}
+function renderCalList(){
+  const items=scheduleItems().filter(x=>x.dayKey===calDay);
+  items.sort((a,b)=>a.time.localeCompare(b.time));
+  $("#calDayLabel").textContent=(calDay||"选择日期")+" · "+items.length+" 项";
+  if(!items.length){$("#calList").innerHTML='<div class="empty-box">这一天没有邮箱同步的日程</div>';return}
+  $("#calList").innerHTML=items.map(x=>{
+    const parts=(x.time||"").split("-").map(s=>s.trim());
+    return `
+    <div class="cal-item" onclick="openCalItem('${x.id}')">
+      <div class="cal-time"><b>${esc(parts[0]||x.time)}</b><span>${esc(parts[1]||"")}</span></div>
+      <div class="cal-item-main">
+        <p class="cal-item-title"><span>${esc(x.type)} · ${esc(x.subject)}</span>${x.status==="待确认"?'<i class="unread-dot" style="background:var(--warn)"></i>':""}</p>
+        <p class="cal-item-sub"><span>${esc(x.company)} · ${esc(x.role||"")}</span><span>${x.mode==="online"?"线上":"线下"}</span><span class="source">${esc(x.sender||"邮箱")}</span></p>
+      </div>
+      <span class="status-tag ${x.status==="待确认"?"hot":x.status==="已完成"?"ok":""}">${esc(x.status)}</span>
+    </div>`;
+  }).join("");
+}
+function openCalItem(id){
+  const x=scheduleItems().find(i=>i.id===id);
+  if(!x)return;
+  const m=findMail(x.mailId)||{};
+  const fm=m.ai||{};
+  const lineText=x.mode==="online"?(fm.url||"线上进行"):(fm.place||x.body.slice(0,60));
+  $("#calSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">日程原文</div>
+      <button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button>
+    </div>
+    <div class="sheet-body">
+      <div class="detail-company">
+        <span class="company-logo">${esc(x.company.slice(0,2))}</span>
+        <div>
+          <p class="company-name">${esc(x.company)} · ${esc(x.type)}</p>
+          <p class="company-role">${esc(x.role||"")}</p>
+        </div>
+        <span class="detail-mode">${x.mode==="online"?"线上":"线下"}</span>
+      </div>
+      <div class="info-row">${ic("calendar")}<span class="info-label">时间</span><span class="info-value">${esc(x.day)} ${esc(x.time)}</span></div>
+      <div class="info-row">${ic(x.mode==="online"?"link":"pin")}<span class="info-label">${x.mode==="online"?"考试网址":"地址"}</span><span class="info-value">${esc(lineText||"")}</span></div>
+      <div class="info-row">${ic("mail")}<span class="info-label">来源</span><span class="info-value">${esc(x.sender||"邮箱原文")} · ${esc((findMail(x.mailId)||{}).time||"")}</span></div>
+      <p style="font-size:11px;color:var(--muted);margin:8px 2px 8px">邮箱原文</p>
+      <div class="mail-body">${esc(x.body||"暂无正文")}</div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" onclick="closeSheets()">知道了</button>
+    </div>`;
+  showSheet("calSheet");
+}
+
+function renderProgress(){
+  const stats=progressStats();
+  $("#progressSub").textContent=`${stats.applications} 个岗位 · ${stats.companies} 家公司 · ${stats.open} 条进行中`;
+  if(progressView==="list")renderProgressList();else renderDashboard();
+  $$("#progressSeg button").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")===`setProgressView('${progressView}')`));
+}
+function progressStats(){
+  const applications=progress.length;
+  const companies=new Set(progress.map(p=>p.company)).size;
+  const open=progress.filter(p=>!p.result).length;
+  const offers=progress.filter(p=>p.result==="offer").length;
+  const examSteps=progress.flatMap(p=>p.steps.filter(s=>s.name==="笔试"&&(s.state==="done"||s.state==="ended")));
+  const interviewSteps=progress.flatMap(p=>p.steps.filter(s=>s.name.includes("面")&&(s.state==="done"||s.state==="ended")));
+  const examPass=examSteps.filter(s=>s.state==="done").length;
+  const interviewPass=interviewSteps.filter(s=>s.state==="done").length;
+  const passRate=examSteps.length?Math.round(examPass/examSteps.length*100):0;
+  const interviewPassRate=interviewSteps.length?Math.round(interviewPass/interviewSteps.length*100):0;
+  return {applications,companies,open,offers,examDone:examSteps.length,interviewDone:interviewSteps.length,examPass,interviewPass,passRate,interviewPassRate};
+}
+function progressStatus(p){
+  if(p.result==="offer")return "已获 Offer";
+  if(p.result==="reject")return "流程结束";
+  const pending=p.steps.find(s=>s.state==="pending");
+  if(pending)return pending.name+" · 待完成";
+  if(p.steps.some(s=>s.state==="ended"))return "本轮已结束";
+  return "等待下一轮通知";
+}
+function stepRow(p){
+  return `<div class="step-row">${p.steps.map((s,i)=>`
+    <div class="step ${s.state==="done"?"done":s.state==="pending"?"waiting":s.state==="ended"?"ended":""}">
+      <i></i><span>${s.name}</span>
+    </div>${i<p.steps.length-1?'<span class="step-line"></span>':""}
+  `).join("")}</div>`;
+}
+const companyBrandColors={
+  京东:"#e1251b",腾讯:"#0b6cff",小米:"#ff6900",哔哩哔哩:"#fb7299",美团:"#ffc300",
+  网易:"#e3120b",字节跳动:"#0a2540",拼多多:"#e02e24",淘宝:"#ff5000",阿里巴巴:"#ff6a00"
+};
+function companyLogoStyle(name){
+  const c=companyBrandColors[name]||"var(--accent)";
+  const darkText=["美团","淘宝"].includes(name);
+  return `background:${c};color:${darkText?"#26262b":"#ffffff"}`;
+}
+function renderProgressList(){
+  const map={};
+  progress.forEach(p=>{
+    (map[p.company]=map[p.company]||[]).push(p);
+  });
+  const groups=Object.entries(map).map(([company,items])=>({company,items}));
+  $("#progressBody").innerHTML=groups.map(g=>{
+    const inProgress=g.items.filter(p=>!p.result).length;
+    return `
+    <div class="company-group">
+      <div class="company-head">
+        <span class="company-logo" style="${companyLogoStyle(g.company)}">${esc(g.company.slice(0,2))}</span>
+        <div class="company-head-name">
+          <b>${esc(g.company)}</b>
+          <span>${g.items.length} 个岗位 · ${inProgress} 条进行中</span>
+        </div>
+      </div>
+      ${g.items.map(progressCardHtml).join("")}
+    </div>`;
+  }).join("");
+}
+function progressCardHtml(p){
+  return `
+    <div class="prog-card" onclick="openProgress('${p.id}')">
+      <div class="prog-top">
+        <div class="prog-company">
+          <b>${esc(p.company)} · ${esc(p.role)}</b>
+          <span>${esc(p.source)} 同步 · 更新 ${esc(p.updated)}</span>
+        </div>
+        <span class="status-tag ${p.result==="offer"?"ok":p.result==="reject"?"off":"hot"}">${esc(progressStatus(p))}</span>
+      </div>
+      ${stepRow(p)}
+      <div class="prog-foot">
+        <span class="prog-note">${esc(p.next)}</span>
+        <button class="mini-btn fill" onclick="event.stopPropagation();advanceProgress('${p.id}')">推进</button>
+      </div>
+    </div>`;
+}
+function renderDashboard(){
+  const stats=progressStats();
+  const total=stats.examDone+stats.interviewDone+stats.offers;
+  const examW=Math.round(stats.examDone/total*100);
+  const ivW=Math.round(stats.interviewDone/total*100);
+  const offW=Math.max(0,100-examW-ivW);
+  $("#progressBody").innerHTML=`
+    <div class="achieve-card">
+      <div class="achieve-hero">
+        <b>${stats.offers}</b>
+        <div><strong>已获 Offer</strong><small>${stats.applications} 个岗位 · ${stats.companies} 家公司</small></div>
+      </div>
+      <div class="achieve-rate">
+        <span>笔试通过率<b>${stats.passRate}%</b></span>
+        <span>面试通过率<b>${stats.interviewPassRate}%</b></span>
+      </div>
+    </div>
+    <div class="achieve-grid">
+      <div class="achieve-tile"><b>${stats.applications}</b><span>岗位</span></div>
+      <div class="achieve-tile"><b>${stats.companies}</b><span>公司</span></div>
+      <div class="achieve-tile"><b>${stats.examDone}</b><span>已完成笔试</span></div>
+      <div class="achieve-tile"><b>${stats.interviewDone}</b><span>已完成面试</span></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">近一周节点 <span>日程 · 邮件</span></div>
+      ${achieveTrend()}
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">成果构成 <span>已完成 ${total} 个节点</span></div>
+      <div class="gain-stack">
+        <div class="gain-seg exam" style="width:${examW}%"></div>
+        <div class="gain-seg iv" style="width:${ivW}%"></div>
+        <div class="gain-seg off" style="width:${offW}%"></div>
+      </div>
+      <div class="chart-legend">
+        <span><i style="background:var(--blue)"></i>笔试 <b>${stats.examDone}</b> · 通过 ${stats.examPass}</span>
+        <span><i style="background:var(--accent)"></i>面试 <b>${stats.interviewDone}</b> · 通过 ${stats.interviewPass}</span>
+        <span><i style="background:var(--ok)"></i>Offer <b>${stats.offers}</b></span>
+      </div>
+    </div>`;
+}
+function achieveTrend(){
+  const items=scheduleItems();
+  const days=["9月12日","9月13日","9月14日","9月15日","9月16日","9月17日","9月18日"];
+  const counts=days.map(d=>items.filter(x=>x.dayKey===d).length);
+  const max=Math.max(1,...counts);
+  return `
+    <div class="trend-chart">${days.map((d,i)=>{
+      const v=counts[i];
+      return `
+      <div class="trend-col">
+        <span class="trend-num">${v||""}</span>
+        <div class="trend-bar"><i class="${v?"":"blank"}" style="height:${v?Math.max(10,Math.round(v/max*100)):3}%"></i></div>
+        <span class="trend-label">09/${12+i}</span>
+      </div>`;
+    }).join("")}</div>
+    <p class="chart-note">本周 ${items.length} 场日程 · 邮箱同步 ${mails.length} 封</p>`;
+}
+
+
+function renderBindings(){
+  $("#bindList").innerHTML=mailboxes.map(m=>`
+    <div class="setting-row">
+      <i class="service-logo" style="background:${m.color}">${m.mark}</i>
+      <div class="setting-main">
+        <p class="setting-label">${m.name}</p>
+        <p class="setting-sub">${m.bound?m.account:m.note}</p>
+      </div>
+      <button class="bind-btn ${m.bound?"connected":""}" onclick="${m.bound?`syncMailbox('${m.id}')`:`bindFlow('${m.id}')`}">${m.bound?"已同步":"去绑定"}</button>
+    </div>
+  `).join("");
+}
+
+/* ---------- 操作 ---------- */
+function setTab(t){
+  currentTab=t;
+  $$(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+  $$(".page").forEach(p=>p.classList.toggle("active",p.dataset.page===t));
+  if(t==="todo")setArrangeView(arrangeView);
+  renderNav();
+}
+function setArrangeView(v){
+  arrangeView=v;
+  $("#arrangeList").style.display=v==="list"?"":"none";
+  $("#arrangeCalendar").style.display=v==="calendar"?"":"none";
+  $$("#arrangeSeg button").forEach(b=>b.classList.toggle("active",b.getAttribute("onclick")===`setArrangeView('${v}')`));
+  if(v==="calendar")renderCalendar();
+}
+function setTodoFilter(f){todoFilter=f;renderTodo();renderBadges()}
+function setMailFilter(f){mailFilter=f;renderMails()}
+function setProgressView(v){progressView=v;renderProgress()}
+function setTheme(name){
+  if(name==="mono")name="blue";
+  theme=name;
+  $("#miniApp").setAttribute("data-theme",name);
+  try{localStorage.setItem("career-demo-theme",name)}catch(e){}
+  $$(".theme-option").forEach(b=>b.classList.toggle("active",b.dataset.theme===name));
+  toast(name==="blue"?"已切换蓝白模式":"已切换粉白模式");
+}
+function toggleTodo(id){
+  const t=todos.find(x=>x.id===id);
+  if(!t)return;
+  t.done=!t.done;
+  renderTodo();renderBadges();renderCalendar();
+  if($("#todoSheet").classList.contains("show"))openTodo(id);
+  toast(t.done?"待办已完成":"已恢复为待办");
+}
+function advanceProgress(id){
+  const p=progress.find(x=>x.id===id);
+  if(!p)return;
+  const idx=p.steps.findIndex(s=>s.state==="pending");
+  if(idx<0){toast("正在等待下一轮通知");return}
+  p.steps[idx].state="done";
+  const following=p.steps[idx+1];
+  if(following&&following.state==="pending")p.next=next(p);
+  else p.next="等待下一轮通知";
+  p.updated="手动更新";
+  renderProgress();
+  if($("#progressSheet").classList.contains("show"))openProgress(id);
+  toast("已标记通过");
+}
+function next(p){
+  if(p.result==="offer")return"Offer 沟通中";
+  if(p.result==="reject")return"流程已结束";
+  const s=p.steps.find(x=>x.state==="pending");
+  if(s)return s.name+" · 待完成";
+  if(p.steps.some(x=>x.state==="ended"))return"本轮已结束 · 等待下一轮通知";
+  return"等待下一轮通知";
+}
+function closeProgressStep(id){
+  const p=progress.find(x=>x.id===id);
+  if(!p)return;
+  const idx=p.steps.findIndex(s=>s.state==="pending");
+  if(idx<0){toast("当前没有待完成环节");return}
+  p.steps[idx].state="ended";
+  p.next="本轮已结束 · 等待下一轮通知";
+  p.updated="手动更新";
+  renderProgress();
+  if($("#progressSheet").classList.contains("show"))openProgress(id);
+  toast("已结束当前环节");
+}
+function setResult(id,res){
+  const p=progress.find(x=>x.id===id);
+  if(!p)return;
+  p.result=res;
+  p.next=res==="offer"?"Offer 沟通中":"流程已结束";
+  p.updated="手动更新";
+  renderProgress();
+  if($("#progressSheet").classList.contains("show"))openProgress(id);
+  toast(res==="offer"?"已标记获 Offer":"已标记流程结束");
+}
+function addCalendar(id){
+  const t=todos.find(x=>x.id===id);
+  toast(`已加入系统日历：${t.company} ${t.day} ${t.time}`);
+}
+function copyText(text,msg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast(msg)).catch(()=>fallbackCopy(text,msg));
+  }else fallbackCopy(text,msg);
+}
+function fallbackCopy(text,msg){
+  const ta=document.createElement("textarea");
+  ta.value=text;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");toast(msg)}catch(e){toast("内容已展示，长按可复制")}
+  ta.remove();
+}
+function copyTodoLine(id){
+  const t=todos.find(x=>x.id===id);
+  if(!t)return;
+  const text=t.mode==="online"?t.url:(t.address||t.short);
+  copyText(text,t.mode==="online"?"考试网址已复制":"地址已复制");
+}
+function copyMailUrl(id){
+  const m=mails.find(x=>x.id===id);
+  const txt=m&&m.ai?m.ai.url:"";
+  if(txt)copyText(txt,"考试网址已复制");else toast("该邮件无考试网址");
+}
+function copyMailAddress(id){
+  const m=mails.find(x=>x.id===id);
+  const txt=m&&m.ai?m.ai.place:"";
+  if(txt)copyText(txt,"地址已复制");else toast("线上考试无需线下地址");
+}
+function refresh(show){
+  const el=$("#navAction");
+  el.classList.add("spinning");
+  setTimeout(()=>{
+    el.classList.remove("spinning");
+    renderBadges();
+    toast(show);
+  },950);
+}
+function navSync(){refresh("已同步 1 封新邮件 · AI 解析完成")}
+function syncMailbox(id){
+  const m=mailboxes.find(x=>x.id===id);
+  if(!m)return;
+  refresh(`${m.name} 已同步`);
+}
+function showSetting(){toast("每日 09:00 汇总已开启")}
+function showPrivacy(){toast("仅读取笔试 / 面试相关字段")}
+
+/* ---------- sheets ---------- */
+function showSheet(id){$("#mask").classList.add("show");$("#"+id).classList.add("show")}
+function closeSheets(){
+  $("#mask").classList.remove("show");
+  $$(".sheet").forEach(s=>s.classList.remove("show"));
+}
+function openTodo(id){
+  const t=todos.find(x=>x.id===id);
+  if(!t)return;
+  const mail=mails.find(m=>m.id===t.mailId)||{sender:"邮件原文",addr:""};
+  $("#todoSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">${t.company} · ${t.type}</div>
+      <button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button>
+    </div>
+    <div class="sheet-body">
+      <div class="detail-company">
+        <span class="company-logo" style="background:${mail.color||"var(--accent)"}">${t.company.slice(0,2)}</span>
+        <div>
+          <p class="company-name">${t.company}</p>
+          <p class="company-role">${t.role}</p>
+        </div>
+        <span class="detail-mode">${t.mode==="online"?"线上":"线下"}</span>
+      </div>
+      <div class="info-row">${ic("calendar")}<span class="info-label">时间</span><span class="info-value">${t.day} ${t.time}</span></div>
+      ${t.mode==="online"?`
+      <div class="info-row">${ic("link")}<span class="info-label">考试网址</span><span class="info-value">${esc(t.url)}<span class="copy-inline" onclick="copyTodoLine('${t.id}')">${ic("copy","ic-sm")}复制</span></span></div>
+      <div class="info-row">${ic("pin")}<span class="info-label">线下地址</span><span class="info-value">线上考试，无需线下地址</span></div>
+      `:`
+      <div class="info-row">${ic("pin")}<span class="info-label">线下地址</span><span class="info-value">${esc(t.address)}<span class="copy-inline" onclick="copyTodoLine('${t.id}')">${ic("copy","ic-sm")}复制</span></span></div>
+      <div class="info-row">${ic("link")}<span class="info-label">考试网址</span><span class="info-value">线下考试，无网址</span></div>`}
+      <div class="info-row">${ic("mail")}<span class="info-label">来源邮件</span><span class="info-value">${esc(mail.sender)} · ${esc(mail.time)}</span></div>
+      <div class="info-row">${ic("bell")}<span class="info-label">提醒</span><span class="info-value">${t.cat==="exam"?"考前 30 分钟":"面试前 30 分钟"} · 微信订阅消息</span></div>
+      <div class="info-row">${ic("sparkles")}<span class="info-label">AI 备注</span><span class="info-value"><span class="tag-row">${(t.tags||[]).map(x=>`<span class="mini-tag">${esc(x)}</span>`).join("")}</span></span></div>
+      <p style="font-size:11px;color:var(--muted);margin:10px 2px 8px">邮箱原文</p>
+      <div class="mail-body">${esc(mail.body||"暂无正文")}</div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn" onclick="copyTodoLine('${t.id}')">${ic("copy","ic-sm")} ${t.mode==="online"?"复制网址":"复制地址"}</button>
+      <button class="btn btn-primary" onclick="toggleTodo('${t.id}')">${t.done?"恢复待办":"标记完成"}</button>
+    </div>`;
+  showSheet("todoSheet");
+}
+function mailRowHtml(m){
+  return `
+    <div class="mail-row" onclick="openMail('${m.id}')">
+      <i class="mail-logo" style="background:${m.color||"var(--accent)"}">${m.initial||m.sender[0]}</i>
+      <div class="mail-main">
+        <p class="mail-subject"><span>${esc(m.subject)}${m.unread?'<i class="unread-dot"></i>':""}</span></p>
+        <p class="mail-snip">${esc(m.sender)}${m.ai?" · "+esc(m.ai.company+" "+m.ai.type):""} · ${esc(m.time)}</p>
+      </div>
+      <span class="status-tag ${m.statusKey==="pending"?"hot":m.statusKey==="todo"?"ok":"off"}">${esc(m.status)}</span>
+    </div>`;
+}
+function openMailList(title,list){
+  $("#mailSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">${title}</div>
+      <button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button>
+    </div>
+    <div class="sheet-body">
+      <div class="mail-list">
+        ${list.length?list.map(mailRowHtml).join(""):'<div class="empty-box">这里没有待处理邮件</div>'}
+      </div>
+    </div>`;
+  showSheet("mailSheet");
+}
+function openMailArchive(){openMailList("邮箱同步记录",mails)}
+function openPendingMails(){openMailList("待确认邮件",mails.filter(m=>m.statusKey==="pending"))}
+function openMail(id){
+  const m=mails.find(x=>x.id===id);
+  if(!m)return;
+  const a=m.ai;
+  const mode=a?a.mode==="online"?"线上":"线下":"未识别";
+  const sourceAddr=m.addr||m.recipient||"";
+  const action=m.statusKey==="pending"?
+    `<button class="btn btn-primary" onclick="generateTodo('${m.id}')">${ic("check","ic-sm")} 确认并生成待办</button>
+     <button class="btn" onclick="ignoreMail('${m.id}')">忽略</button>`:
+    m.statusKey==="todo"?
+    `<button class="btn btn-primary" onclick="goMailTodo('${m.id}')">${ic("target","ic-sm")} 查看对应待办</button>
+     <button class="btn" onclick="copyMailSummary('${m.id}')">${ic("copy","ic-sm")} 复制摘要</button>`:
+    `<button class="btn btn-primary" onclick="restoreMail('${m.id}')">重新识别</button>
+     <button class="btn" onclick="copyMailSummary('${m.id}')">${ic("copy","ic-sm")} 复制摘要</button>`;
+  $("#mailSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">邮件详情</div>
+      <button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button>
+    </div>
+    <div class="sheet-body">
+      <div class="detail-company" style="background:var(--surface)">
+        <i class="mail-logo" style="background:${m.color}">${m.initial||m.sender[0]}</i>
+        <div class="setting-main">
+          <p class="company-name">${m.sender}</p>
+          <p class="company-role">${m.subject}</p>
+          <p class="company-role">${m.time}</p>
+        </div>
+        <span class="status-tag ${m.statusKey==="pending"?"hot":m.statusKey==="todo"?"ok":"off"}">${m.status}</span>
+      </div>
+      ${a?`
+        <div class="ai-panel">
+          <div class="ai-head">${ic("sparkles","ic-sm")} AI 自动解析<span class="ai-status">可信度 94%</span></div>
+          <div class="ai-grid">
+            <div class="ai-field"><label>公司</label><b>${a.company}</b></div>
+            <div class="ai-field"><label>类型</label><b>${a.type}</b></div>
+            <div class="ai-field full"><label>时间</label><b>${a.day} ${a.time}</b></div>
+            <div class="ai-field"><label>形式</label><b>${mode}</b></div>
+            <div class="ai-field ${a.mode==="online"?"full":""}"><label>${a.mode==="online"?"线上地址":"线下地址"}</label><b>${esc(a.place||(a.mode==="online"?"线上进行":"待获取"))}</b>${a.mode==="offline"&&a.place?`<span class="copy-inline" onclick="copyMailAddress('${m.id}')">复制</span>`:""}</div>
+            <div class="ai-field full"><label>考试网址${a.mode==="online"?"":"（线下考试）"}</label><b>${a.url?esc(a.url):"线下考试无网址"}${a.url?`<span class="copy-inline" onclick="copyMailUrl('${m.id}')">复制</span>`:""}</b></div>
+            <div class="ai-field full"><label>来源邮箱</label><b>${esc(sourceAddr)}<span class="copy-inline" onclick="copyMailSource('${m.id}')">复制</span></b></div>
+          </div>
+        </div>`:`
+        <div class="ai-panel"><div class="ai-head">${ic("sparkles","ic-sm")} AI 自动解析<span class="ai-status">未识别</span></div>
+          <p style="font-size:11px;color:var(--muted);line-height:1.6">未识别到笔试 / 面试安排，未生成待办。</p>
+        </div>`}
+      <p style="font-size:11px;color:var(--muted);margin:2px 4px 8px">邮件原文</p>
+      <div class="mail-body">${esc(m.body)}</div>
+    </div>
+    <div class="sheet-foot">${action}</div>`;
+  showSheet("mailSheet");
+}
+function generateTodo(id){
+  const m=mails.find(x=>x.id===id);
+  if(!m||!m.ai)return;
+  if(todos.some(t=>t.mailId===m.id)){goTodo(id);return}
+  const a=m.ai;
+  const t={
+    id:"t"+m.id.slice(1),
+    company:a.company,
+    type:a.type,
+    cat:a.type==="笔试"?"exam":"interview",
+    mode:a.mode,
+    group:(a.mode==="online"&&a.day.includes("9月15日"))?"明天 · 9月15日":a.day,
+    day:a.day,
+    time:a.time,
+    role:a.role||a.type,
+    short:a.url?a.url:a.place,
+    url:a.url||"",
+    address:a.place||"",
+    mailId:m.id,
+    done:false,
+    tags:a.tags||[]
+  };
+  todos.unshift(t);
+  m.status="已生成待办";m.statusKey="todo";m.unread=false;
+  const p=progress.find(x=>x.company===a.company);
+  if(p){p.source=p.source;p.updated="邮件自动更新";p.next=`${a.type} ${a.day} ${a.time}`;}
+  closeSheets();
+  setTab("todo");setTodoFilter("all");
+  renderAll();
+  toast("已生成待办");
+}
+function ignoreMail(id){
+  const m=mails.find(x=>x.id===id);
+  if(!m)return;
+  m.status="自动忽略";m.statusKey="none";m.unread=false;
+  closeSheets();renderMails();renderBadges();
+  toast("已忽略该邮件");
+}
+function restoreMail(id){
+  const m=mails.find(x=>x.id===id);
+  if(!m)return;
+  m.status="待确认";m.statusKey="pending";
+  closeSheets();renderMails();renderBadges();
+  toast("已放回待确认");
+}
+function goMailTodo(id){
+  const t=todos.find(x=>x.mailId===id);
+  if(t){closeSheets();setTab("todo");openTodo(t.id)}else toast("尚未生成待办");
+}
+function goMail(id){
+  const t=todos.find(x=>x.mailId===id);
+  if(t){closeSheets();setTab("todo");openTodo(t.id)}else toast("该邮箱原文无待办");
+}
+function copyMailSummary(id){
+  const m=mails.find(x=>x.id===id);
+  if(!m)return;
+  const summary=`${m.subject}\n${m.ai?`${m.ai.company} · ${m.ai.type} · ${m.ai.day} ${m.ai.time} · ${m.ai.mode==="online"?"线上":"线下"}`:m.body.slice(0,60)}`;
+  copyText(summary,"摘要已复制");
+}
+function copyMailSource(id){
+  const m=mails.find(x=>x.id===id);
+  const addr=m.addr||m.recipient||"";
+  if(addr)copyText(addr,"邮箱已复制");else toast("没有来源邮箱");
+}
+function openProgress(id){
+  const p=progress.find(x=>x.id===id);
+  if(!p)return;
+  const hasPending=p.steps.some(s=>s.state==="pending");
+  $("#progressSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">${p.company} · 秋招进度</div>
+      <button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button>
+    </div>
+    <div class="sheet-body">
+      <div class="detail-company">
+        <span class="company-logo">${p.company.slice(0,2)}</span>
+        <div><p class="company-name">${p.company}</p><p class="company-role">${p.role} · ${p.source}</p></div>
+        <span class="status-tag ${p.result==="offer"?"ok":p.result==="reject"?"off":"hot"}">${progressStatus(p)}</span>
+      </div>
+      ${stepRow(p)}
+      <div class="info-row">${ic("refresh")}<span class="info-label">更新来源</span><span class="info-value">${p.updated} · ${p.source}</span></div>
+      <div class="info-row">${ic("calendar")}<span class="info-label">下一步</span><span class="info-value">${p.next}</span></div>
+    </div>
+    <div class="sheet-foot">
+      ${hasPending?`
+        <button class="btn btn-primary" onclick="advanceProgress('${p.id}')">通过</button>
+        <button class="btn" onclick="closeProgressStep('${p.id}')">结束</button>`:`
+        <button class="btn btn-primary" onclick="closeSheets()">知道了</button>`}
+    </div>`;
+  showSheet("progressSheet");
+}
+
+/* ---------- 邮箱绑定 ---------- */
+function openAddBind(){
+  $("#bindSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head"><div class="sheet-title">添加邮箱</div><button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button></div>
+    <div class="sheet-body">
+      <p style="font-size:12px;color:var(--muted);line-height:1.7">支持常见个人邮箱，绑定后自动读取笔试与面试相关字段。模拟流程：点击邮箱 → 授权成功 → 自动完成首次同步。</p>
+      ${mailboxes.map(m=>`
+        <div class="setting-row" style="margin-top:8px;border:1px solid var(--line);border-radius:8px">
+          <i class="service-logo" style="background:${m.color}">${m.mark}</i>
+          <div class="setting-main"><p class="setting-label">${m.name}</p><p class="setting-sub">${m.bound?m.account:m.note}</p></div>
+          <button class="bind-btn ${m.bound?"connected":""}" onclick="bindFlow('${m.id}')">${m.bound?"已绑定":"去绑定"}</button>
+        </div>
+      `).join("")}
+      <p style="font-size:10px;color:var(--muted);margin-top:10px">授权后仅读取标题、发件人、时间与正文中识别字段。</p>
+    </div>`;
+  showSheet("bindSheet");
+}
+function bindFlow(id){
+  const m=mailboxes.find(x=>x.id===id);
+  if(m.bound){toast(`${m.name} 已绑定`);return}
+  $("#bindSheet").innerHTML=`
+    <div class="handle"></div>
+    <div class="sheet-head"><div class="sheet-title">绑定 ${m.name}</div><button class="close-btn" onclick="closeSheets()">${ic("x","ic-sm")}</button></div>
+    <div class="oauth-state">
+      <span class="spinner"></span>
+      <p>正在完成 ${m.name} 授权</p>
+      <small>模拟拉起第三方邮箱授权页</small>
+    </div>`;
+  setTimeout(()=>{
+    m.bound=true;
+    m.account=m.id==="hotmail"?"lin@outlook.com":"campus21@gmail.com";
+    renderBindings();
+    closeSheets();
+    toast(m.name+" 已绑定 · 发现 2 封笔试面试邮件");
+  },1600);
+}
+
+/* ---------- init ---------- */
+(function init(){
+  try{
+    const saved=localStorage.getItem("career-demo-theme");
+    if(saved)setTheme(saved);
+  }catch(e){}
+  try{renderAll()}catch(e){
+    document.body.setAttribute("data-demo-error",String(e&&e.stack||e));
+  }
+  $$(".switch input").forEach(i=>{
+    i.addEventListener("change",()=>toast(i.checked?"已开启提醒":"已关闭提醒"));
+  });
+  const fit=()=>{
+    const s=Math.min((innerWidth-16)/410,(innerHeight-16)/852,1);
+    $("#phone").style.transform="scale("+s+")";
+  };
+  fit();
+  addEventListener("resize",fit);
+})();
+</script>
+</body>
+</html>
